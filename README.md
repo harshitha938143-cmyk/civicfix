@@ -1,2 +1,74 @@
 # civicfix
 CivicFix : a platform to report potholes,broken streetlights,damaged footpaths and overflowing bins,with duplicate merging,ticket tracking and staff dashboard.
+# 🏙️ CivicFix – Smart Civic Issue Management
+
+## 📌 About the Project
+
+CivicFix is a smart civic issue reporting platform designed to help communities report local problems such as potholes, damaged footpaths, broken streetlights, and overflowing garbage bins.
+
+The platform helps classify complaints, detect possible duplicate reports, assign issues to responsible teams, and track their resolution status.
+
+## 🎯 Problem Statement
+
+Civic complaints can be duplicated, misplaced, or lost across different reporting channels. This makes it difficult for residents to track issues and for responsible teams to manage them efficiently.
+
+## 💡 Our Solution
+
+CivicFix provides a centralized dashboard where civic issues can be reported, categorized, managed, and tracked.
+
+## ✨ Key Features
+
+* 📝 **Issue Reporting:** Submit civic complaints with a description, location, and optional photo.
+* 🤖 **Automatic Classification:** Suggests an issue category based on keywords in the description.
+* 🔍 **Duplicate Detection:** Identifies possible duplicate reports using category, location, and description similarity.
+* 👷 **Team Assignment:** Assigns issues to relevant teams, such as road maintenance, electrical, and sanitation.
+* 📊 **Status Tracking:** Tracks reports through Submitted, Assigned, In Progress, and Resolved.
+* 📈 **Admin Dashboard:** Displays reports, issue statistics, and case management tools.
+
+## 🛠️ Technologies Used
+
+* Python
+* Streamlit
+* Pandas
+
+## 🚀 How to Run
+
+1. Install Python on your computer.
+
+2. Install the required libraries:
+
+   ```bash
+   python -m pip install streamlit pandas
+   ```
+
+3. Open a terminal in the project folder.
+
+4. Run the application:
+
+   ```bash
+   python -m streamlit run app.py
+   ```
+
+5. Open the local URL shown in the terminal.
+
+## 🔄 Workflow
+
+1. A resident submits a civic issue.
+2. CivicFix suggests a category.
+3. The system checks for possible duplicates.
+4. A new issue is assigned to a responsible team.
+5. The issue status is updated through the dashboard.
+6. Residents can track the current status.
+
+## 🌍 Impact
+
+CivicFix aims to improve civic complaint organization, reduce duplicate entries, increase transparency, and help communities monitor local issues more efficiently.
+
+## ⚠️ Current Prototype Limitations
+
+This is a hackathon prototype. Report data is held in session memory and may not persist after a session resets. Duplicate detection is basic, and department assignments and status updates are simulated within the application. A shared database, secure user accounts, and integration with actual municipal systems would be needed for production use.
+
+## 👥 Project Name
+
+**CivicFix — Report. Route. Resolve.**
+
