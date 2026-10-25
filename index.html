@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CivicFix – Public Infrastructure Issue Tracker</title>
+<style>
+:root{--ink:#1b2a38;--paper:#f5f6f2;--card:#fff;--line:#d9dcd4;--sign:#f2b705;--ok:#1f7a5c;--bad:#c0392b;--mid:#2f6f9f;--mute:#5d6b78}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5}
+header{background:var(--ink);color:#fff;padding:16px 18px;border-bottom:6px solid var(--sign)}
+header h1{margin:0;font-size:1.4rem;letter-spacing:.3px}
+header p{margin:2px 0 0;color:#c5ced6;font-size:.9rem}
+nav{display:flex;gap:6px;padding:10px 12px;background:#e9ebe4;position:sticky;top:0;z-index:5}
+nav button{flex:1;padding:11px 6px;border:2px solid var(--ink);background:#fff;font:inherit;font-weight:700;border-radius:6px;cursor:pointer}
+nav button.on{background:var(--ink);color:#fff}
+main{max-width:860px;margin:0 auto;padding:14px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px}
+label{display:block;font-weight:700;margin:10px 0 4px}
+select,input,textarea{width:100%;padding:10px;border:1px solid #aab1a6;border-radius:6px;font:inherit;background:#fff}
+textarea{min-height:80px}
+button.pri{background:var(--sign);color:var(--ink);border:2px solid var(--ink);padding:12px 16px;font:inherit;font-weight:700;border-radius:6px;cursor:pointer;margin-top:14px;width:100%}
+button.sec{background:#fff;border:1px solid var(--ink);padding:8px 10px;font:inherit;border-radius:6px;cursor:pointer;margin-top:6px}
+:focus-visible{outline:3px solid var(--mid);outline-offset:2px}
+.msg{padding:12px;border-radius:6px;margin-top:12px;display:none}
+.msg.ok{background:#e1f2ea;border:1px solid var(--ok);display:block}
+.msg.dup{background:#fff3cd;border:1px solid #c9a100;display:block}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:#fff;border:1px solid var(--line);border-left:6px solid var(--sign);border-radius:8px;padding:10px}
+.stat b{font-size:1.7rem;display:block}.stat span{color:var(--mute);font-size:.85rem}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.9rem}
+.bar i{display:block;height:16px;background:var(--mid);border-radius:3px}
+.bar span:first-child{width:130px;flex:none}
+.issue{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff}
+.issue h3{margin:0 0 4px;font-size:1.05rem}
+.meta{color:var(--mute);font-size:.85rem}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:700;color:#fff;margin-right:4px}
+.s-Assigned{background:var(--mid)}.s-In-progress{background:#b8780a}.s-Resolved{background:var(--ok)}.s-New{background:var(--mute)}
+.dupb{background:var(--bad)}
+.issue img{max-width:100%;max-height:160px;border-radius:6px;margin-top:8px;display:block}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.row select{flex:1;min-width:140px}
+.log{font-size:.82rem;color:var(--mute);margin:6px 0 0;padding-left:16px}
+footer{text-align:center;color:var(--mute);font-size:.8rem;padding:16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>CivicFix</h1>
+  <p>Report it once. Track it until it’s fixed.</p>
+</header>
+<nav aria-label="Main">
+  <button class="on" data-tab="report">Report issue</button>
+  <button data-tab="track">Track status</button>
+  <button data-tab="staff">Staff dashboard</button>
+</nav>
+<main>
+
+<section id="report" class="on">
+  <div class="card">
+    <h2 style="margin-top:0">Report a problem</h2>
+    <label for="cat">What is the problem?</label>
+    <select id="cat"></select>
+    <label for="area">Where is it?</label>
+    <select id="area"></select>
+    <label for="landmark">Nearest landmark or street</label>
+    <input id="landmark" placeholder="e.g. Opposite the bus stop">
+    <label for="desc">Describe the problem</label>
+    <textarea id="desc" placeholder="e.g. Deep pothole, two-wheelers are skidding"></textarea>
+    <label for="photo">Add a photo (optional)</label>
+    <input id="photo" type="file" accept="image/*">
+    <button class="sec" id="gps" type="button">Use my GPS location</button>
+    <div class="meta" id="gpsOut"></div>
+    <button class="pri" id="submit">Submit report</button>
+    <div class="msg" id="result" role="status"></div>
+  </div>
+</section>
+
+<section id="track">
+  <div class="card">
+    <h2 style="margin-top:0">Track your report</h2>
+    <label for="tid">Ticket number</label>
+    <input id="tid" placeholder="e.g. CF-1003">
+    <button class="pri" id="find">Check status</button>
+  </div>
+  <div id="trackOut"></div>
+</section>
+
+<section id="staff">
+  <div class="stats" id="stats"></div>
+  <div class="card">
+    <h3 style="margin-top:0">Reports by category</h3>
+    <div id="chart"></div>
+  </div>
+  <div class="row">
+    <select id="fCat" aria-label="Filter by category"></select>
+    <select id="fStat" aria-label="Filter by status">
+      <option value="">All statuses</option><option>Assigned</option><option>In progress</option><option>Resolved</option>
+    </select>
+  </div>
+  <div id="list"></div>
+  <button class="sec" id="reset">Reset demo data</button>
+</section>
+
+</main>
+<footer>CivicFix prototype · Innovators Conclave 2026 · IC26-04-02 · uses sample data</footer>
+
+<script>
+const CATS = {
+  "Pothole": "Roads Department",
+  "Damaged footpath": "Roads Department",
+  "Broken streetlight": "Electrical Department",
+  "Overflowing bin": "Sanitation Department"
+};
+const AREAS = ["Gandhi Nagar","Market Road","Railway Colony","Lake View","College Road"];
+const STAGES = ["Assigned","In progress","Resolved"];
+const KEY = "civicfix-v1";
+const $ = id => document.getElementById(id);
+const day = 86400000;
+
+function seed(){
+  const now = Date.now();
+  const mk = (n,cat,area,lm,desc,status,ago,count,took) => ({
+    id:"CF-"+n, cat, area, landmark:lm, desc, photo:"", status, count,
+    dept:CATS[cat], created:now-ago*day,
+    resolved: status==="Resolved" ? now-(ago-took)*day : null,
+    log:[{t:now-ago*day,s:"Reported and assigned to "+CATS[cat]}]
+  });
+  return [
+    mk(1001,"Pothole","Market Road","Near the vegetable market gate","Large pothole on the main lane","In progress",6,4),
+    mk(1002,"Broken streetlight","Lake View","Lake road, pole 14","Light off for a week","Assigned",3,2),
+    mk(1003,"Overflowing bin","Railway Colony","Station entrance","Bin overflowing onto road","Resolved",9,3,2),
+    mk(1004,"Damaged footpath","College Road","In front of the library","Broken slabs, unsafe for walkers","Assigned",2,1),
+    mk(1005,"Pothole","Gandhi Nagar","Temple junction","Water-filled pothole","Resolved",12,5,5),
+    mk(1006,"Broken streetlight","Market Road","Bus stop","Dark at night, safety risk","In progress",5,3),
+    mk(1007,"Overflowing bin","Lake View","Park gate","Not cleared for days","Resolved",8,2,1)
+  ];
+}
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.length)return d}catch(e){}
+  return seed();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(issues))}catch(e){}}
+let issues = load();
+let gps = null;
+
+const fmt = t => new Date(t).toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* tabs */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.tab));
+  if(b.dataset.tab==="staff")renderStaff();
+});
+
+/* form setup */
+$("cat").innerHTML = Object.keys(CATS).map(c=>`<option>${c}</option>`).join("");
+$("area").innerHTML = AREAS.map(a=>`<option>${a}</option>`).join("");
+$("fCat").innerHTML = '<option value="">All categories</option>'+Object.keys(CATS).map(c=>`<option>${c}</option>`).join("");
+
+$("gps").onclick = () => {
+  if(!navigator.geolocation){$("gpsOut").textContent="GPS is not available on this device.";return}
+  $("gpsOut").textContent="Finding location…";
+  navigator.geolocation.getCurrentPosition(p=>{
+    gps={lat:p.coords.latitude.toFixed(5),lng:p.coords.longitude.toFixed(5)};
+    $("gpsOut").textContent="Location saved: "+gps.lat+", "+gps.lng;
+  },()=>{$("gpsOut").textContent="Could not get location. Choose the area instead."});
+};
+
+function shrink(file){
+  return new Promise(res=>{
+    if(!file)return res("");
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const k=Math.min(1,480/img.width),c=document.createElement("canvas");
+        c.width=img.width*k;c.height=img.height*k;
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL("image/jpeg",.6));
+      };
+      img.onerror=()=>res("");
+      img.src=r.result;
+    };
+    r.onerror=()=>res("");
+    r.readAsDataURL(file);
+  });
+}
+
+/* duplicate rule: same category + same area + not yet resolved */
+function findDuplicate(cat,area){
+  return issues.find(i=>i.cat===cat&&i.area===area&&i.status!=="Resolved");
+}
+
+$("submit").onclick = async () => {
+  const cat=$("cat").value, area=$("area").value, desc=$("desc").value.trim();
+  const box=$("result");
+  if(!desc){box.className="msg dup";box.textContent="Please describe the problem so the team knows what to fix.";return}
+  const dup=findDuplicate(cat,area);
+  if(dup){
+    dup.count++;
+    dup.log.push({t:Date.now(),s:"Another resident reported this. Merged as duplicate."});
+    save();
+    box.className="msg dup";
+    box.innerHTML=`This looks like a report we already have (<b>${dup.id}</b>). We added your report to it instead of creating a new one. Track it with ticket <b>${dup.id}</b>.`;
+  }else{
+    const photo=await shrink($("photo").files[0]);
+    const n=1001+issues.length+Math.floor(Math.random()*5);
+    let id="CF-"+n; while(issues.some(i=>i.id===id)) id="CF-"+(++n);
+    issues.unshift({id,cat,area,landmark:$("landmark").value.trim(),desc,photo,gps,status:"Assigned",count:1,
+      dept:CATS[cat],created:Date.now(),resolved:null,
+      log:[{t:Date.now(),s:"Reported and assigned to "+CATS[cat]}]});
+    save();
+    box.className="msg ok";
+    box.innerHTML=`Report submitted. Your ticket number is <b>${id}</b>. It has been assigned to the ${CATS[cat]}.`;
+  }
+  $("desc").value="";$("landmark").value="";$("photo").value="";gps=null;$("gpsOut").textContent="";
+};
+
+/* tracking */
+function issueCard(i,staff){
+  const sc="s-"+i.status.replace(" ","-");
+  return `<div class="issue">
+    <h3>${esc(i.id)} · ${esc(i.cat)}</h3>
+    <div><span class="tag ${sc}">${i.status}</span>${i.count>1?`<span class="tag dupb">${i.count} reports merged</span>`:""}</div>
+    <div class="meta">${esc(i.area)}${i.landmark?" · "+esc(i.landmark):""} · ${fmt(i.created)} · ${esc(i.dept)}</div>
+    <p style="margin:6px 0 0">${esc(i.desc)}</p>
+    ${i.photo?`<img src="${i.photo}" alt="Photo of the reported problem">`:""}
+    ${staff?`<select data-id="${i.id}" class="upd" aria-label="Update status of ${i.id}" style="margin-top:8px">
+      ${STAGES.map(s=>`<option ${s===i.status?"selected":""}>${s}</option>`).join("")}</select>`:""}
+    <ul class="log">${i.log.map(l=>`<li>${fmt(l.t)}: ${esc(l.s)}</li>`).join("")}</ul>
+  </div>`;
+}
+$("find").onclick=()=>{
+  const q=$("tid").value.trim().toUpperCase();
+  const i=issues.find(x=>x.id===q);
+  $("trackOut").innerHTML=i?issueCard(i,false):`<div class="card">No report found for “${esc(q)}”. Check the ticket number and try again.</div>`;
+};
+
+/* staff dashboard */
+function renderStaff(){
+  const total=issues.length;
+  const res=issues.filter(i=>i.status==="Resolved");
+  const open=total-res.length;
+  const merged=issues.reduce((a,i)=>a+i.count-1,0);
+  const avg=res.length?(res.reduce((a,i)=>a+(i.resolved-i.created),0)/res.length/day).toFixed(1):"–";
+  $("stats").innerHTML=[
+    [total,"Issues logged"],[open,"Still open"],[merged,"Duplicates merged"],[avg+(avg==="–"?"":" days"),"Avg. time to fix"]
+  ].map(s=>`<div class="stat"><b>${s[0]}</b><span>${s[1]}</span></div>`).join("");
+
+  const counts=Object.keys(CATS).map(c=>[c,issues.filter(i=>i.cat===c).reduce((a,i)=>a+i.count,0)]);
+  const max=Math.max(1,...counts.map(c=>c[1]));
+  $("chart").innerHTML=counts.map(c=>`<div class="bar"><span>${c[0]}</span><i style="width:${c[1]/max*100}%"></i><b>${c[1]}</b></div>`).join("");
+
+  const fc=$("fCat").value,fs=$("fStat").value;
+  const rows=issues.filter(i=>(!fc||i.cat===fc)&&(!fs||i.status===fs))
+    .sort((a,b)=>b.count-a.count||b.created-a.created);
+  $("list").innerHTML=rows.length?rows.map(i=>issueCard(i,true)).join(""):'<div class="card">No issues match these filters.</div>';
+  document.querySelectorAll(".upd").forEach(s=>s.onchange=()=>{
+    const i=issues.find(x=>x.id===s.dataset.id);
+    i.status=s.value;
+    i.resolved=s.value==="Resolved"?Date.now():null;
+    i.log.push({t:Date.now(),s:"Status changed to "+s.value});
+    save();renderStaff();
+  });
+}
+$("fCat").onchange=$("fStat").onchange=renderStaff;
+$("reset").onclick=()=>{issues=seed();save();renderStaff()};
+</script>
+</body>
+</html>
